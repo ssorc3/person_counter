@@ -1,9 +1,26 @@
 import numpy as np
 import tensorflow as tf
 import cv2 as cv
-import time
+import datetime, time
+import threading
+import azure.iot.device import IoTHubDeviceClient, Message
+
+CONNECTION_STRING = "HostName=ih-e6c97ac3-fa7f-48af-9174-ca3040dfa00f-1.azure-devices.net;DeviceId=0f143f16-ad75-4ba1-bb2e-8e5399be2145;SharedAccessKey=MN/E+FfquilfhU7llfX/Nh2ibc91nXfhTuKEh1tqORo="
+MSG_TXT = '{{"SensorValue": {sensorValue}, "Timestamp": {timestamp}}}'
 
 interval = 5 #seconds
+
+def iothub_client_init():
+    client = IoTHubClient.create_from_connection_string(CONNECTION_STRING)
+    return client
+
+def sendMessage(client, peopleDetected):
+    message = Message(MSG_TXT.format(sensorValue=peopleDetected, timestamp=datetime.datetime.utcnow().isoformat()))
+    prop_map = message.properties()
+    prop_map.add("DigitalTwins-Telemetry", "1.0")
+    prop_map.add("DigitalTwins-SensorHardwareId", "RPi1_OCCUPANCY")
+    prop_map.add("CreationTimeUtc", datetime.datetime.utcnow().isoformat())
+    client.send_message(message)
 
 def sendMessage(peopleDetected):
     print("Detected " + str(peopleDetected) + (" person" if peopleDetected == 1 else " people"))
